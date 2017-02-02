@@ -1,4 +1,29 @@
 Option Compare Text
+Public Responsibility As String 'used to determine what kind of function is returned in the Strat/Funct/Area Check
+
+Private Sub cmd_Information_Click()
+
+Dim LastRow As Integer
+Dim DatePublished As String
+Dim VersionNumber As String
+
+    With Worksheets("Background")
+        LastRow = .Cells(.Rows.Count, 45).End(xlUp).Row
+        DatePublished = .Range("AS" & LastRow)
+        DevVersion = .Range("AA" & LastRow)
+        
+    End With
+    
+    MsgBox "To contact the developer, please use the below contact infomation, correct at the time of publication." & vbCr & vbCr & _
+            "Application Name" & vbTab & vbTab & "APOTW Critical Events" & vbCr & _
+            "Application Version" & vbTab & vbTab & DevVersion & vbCr & _
+            "App Push Date" & vbTab & vbTab & DatePublished & vbCr & _
+            "Developer Name" & vbTab & vbTab & "Joshua McDonald" & vbCr & _
+            "Developer Email" & vbTab & vbTab & "joshua.mcdonald@amecfw.com" & vbCr & _
+            "Developer Phone (Work)" & vbTab & "01946 598573", vbInformation, "Application Information"
+
+
+End Sub
 
 Private Sub cmd_Updater_Click()
 
@@ -23,6 +48,8 @@ Dim StartTime As Double 'timer method
 Dim PredictedRecords As Integer 'The number of records predicted in the Background tab
 Dim tbl As ListObject 'Consolidate Table
 Dim rng As Range 'Range specifically for the table
+Dim SheetCount As Integer 'Holds the number of sheets found in the document.
+Dim WorksheetName As String 'Holds the worksheet name in the check cycle.
 
 If MsgBox("Warning, Previous Data may be overwritten. Continue?", vbYesNo, "Warning.") = vbNo Then
     Exit Sub
@@ -31,6 +58,35 @@ End If
 'Remember time when macro starts
   StartTime = Timer
 
+    SheetCount = ThisWorkbook.Sheets.Count
+    'I want to add some kind of check here to stop the following loop occurring if the system hasnt been changed since the last use.
+    
+    i = 1
+    Do Until i = SheetCount + 1
+        Woksheets(i).Activate
+        WorksheetName = ActiveSheet.Name
+        Debug.Print "WrkSht Name: " & WorksheetName
+        If WorksheetName = "Background" Then
+            i = i + 1
+        Else
+            Worksheets("Background").Range("A" & i + 1).Value = i
+            Worksheets("Background").Range("B" & i + 1).Value = WorksheetName
+            Worksheets("Background").Range("C" & i + 1).Value = "IF(AND(OR('" & WorksheetName & "'!G6=""Yes"", '" & WorksheetName & "'!G6=""For Noting""),'" & WorksheetName & "'!P6=""Open""), 1, 0)" 'Need to check this works.
+            i = i + 1
+        End If
+    Loop
+    
+    i = 1
+    
+    Do Until i = SheetCount + 1
+        WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
+        UserForm1.lbl_ResponsabilityArea.Value = WorksheetName
+        UserForm1.Show
+        Worksheets("Background").Range("F" & i + 1).Value = Responsibility
+        Responsability = ""
+        i = i + 1
+    Loop
+    
     With ActiveSheet
         LastRow = .Cells(.Rows.Count, 7).End(xlUp).Row
         .Range("B6:Q" & LastRow * 2).Clear
