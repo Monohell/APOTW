@@ -1,5 +1,5 @@
 Option Compare Text
-Public Responsibility As String 'used to determine what kind of function is returned in the Strat/Funct/Area Check
+Public G_Responsibility As String 'used to determine what kind of function is returned in the Strat/Funct/Area Check
 
 Private Sub cmd_Information_Click()
 
@@ -63,7 +63,7 @@ End If
     
     i = 1
     Do Until i = SheetCount + 1
-        Woksheets(i).Activate
+        Worksheets(i).Activate
         WorksheetName = ActiveSheet.Name
         Debug.Print "WrkSht Name: " & WorksheetName
         If WorksheetName = "Background" Then
@@ -77,16 +77,56 @@ End If
     Loop
     
     i = 1
+    j = 1
     
     Do Until i = SheetCount + 1
-        WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
-        UserForm1.lbl_ResponsabilityArea.Value = WorksheetName
-        UserForm1.Show
-        Debug.Print "Source: " & Responsibility
-        Worksheets("Background").Range("F" & i + 1).Value = Responsibility
-        Responsability = ""
-        i = i + 1
+        If IsEmpty(Worksheets("Background").Range("B" & i + 1).Value) = True Then 'Finds out if Cells in Col B are empty for skipping (e.g. Background tab)
+            i = i + 1
+        Else
+            If IsEmpty(Worksheets("Background").Range("F" & i + 1).Value) = False Then 'Finds if the cells in Col F are already filled
+                i = i + 1
+                j = j + 1 'used in the checking of filled cells
+            Else 'Fills the responsibility in (Col F)
+                WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
+                Load UserForm1
+                UserForm1.lbl_ResponsabilityArea = WorksheetName
+                G_Responsibility = i + 1
+                UserForm1.Tag = G_Responsibility
+                UserForm1.Show
+                i = i + 1
+            End If
+        End If
     Loop
+    
+    If j + 1 = i Then 'Updating responsibility loop, disregardable if desired
+        
+        If MsgBox("Do you want to update the Responsabilities for each tab?", vbYesNo, "Update Responsabilities?") = vbYes Then
+            i = 1
+            
+            Do Until i = SheetCount + 1
+                If IsEmpty(Worksheets("Background").Range("B" & i + 1).Value) = True Then 'Finds out if Cells in Col B are empty for skipping (e.g. Background tab)
+                    
+                    i = i + 1
+                
+                Else
+                    
+                    Do Until i = SheetCount + 1 'Copied from the loop above.
+                        WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
+                        Load UserForm1
+                        UserForm1.lbl_ResponsabilityArea = WorksheetName
+                        G_Responsibility = i + 1
+                        UserForm1.Tag = G_Responsibility
+                        UserForm1.Show
+                        i = i + 1
+                    Loop
+                
+                End If
+            
+            Loop
+            
+        End If
+    
+    End If
     
     With ActiveSheet
         LastRow = .Cells(.Rows.Count, 7).End(xlUp).Row
