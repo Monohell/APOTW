@@ -82,6 +82,7 @@ End If
         WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
         UserForm1.lbl_ResponsabilityArea.Value = WorksheetName
         UserForm1.Show
+        Debug.Print "Source: " & Responsibility
         Worksheets("Background").Range("F" & i + 1).Value = Responsibility
         Responsability = ""
         i = i + 1
