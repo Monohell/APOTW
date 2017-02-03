@@ -1,0 +1,23 @@
+Private Sub cmd_Area_Click()
+
+Debug.Print "Userform: " & Me.Tag
+Worksheets("Background").Range("F" & Me.Tag) = "Area"
+Unload UserForm1
+
+End Sub
+
+Private Sub cmd_Function_Click()
+
+Debug.Print "Userform: " & Me.Tag
+Worksheets("Background").Range("F" & Me.Tag) = "Function"
+Unload UserForm1
+
+End Sub
+
+Private Sub cmd_Strategic_Click()
+
+Debug.Print "Userform: " & Me.Tag
+Worksheets("Background").Range("F" & Me.Tag) = "Strategic"
+Unload UserForm1
+
+End Sub
