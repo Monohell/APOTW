@@ -1,4 +1,5 @@
-Option Compare Text
+Option Explicit 'Requires all variables to be declared fully
+Option Compare Text 'Removes case sensativity
 Public G_Responsibility As String 'used to determine what kind of function is returned in the Strat/Funct/Area Check
 
 Private Sub cmd_Information_Click()
@@ -34,6 +35,7 @@ Application.ScreenUpdating = False
 
 Dim i As Integer 'Used to count manyyyyy things
 Dim j As Integer 'Used again, to count a lot
+Dim k As Integer 'Record Number Holder
 Dim LastRow As Integer 'Overwritten a lot contrary to other programs.
 Dim TotalSheets As Integer 'Shows the last sheet number.
 Dim FormulasOne As String 'holds the sting with the respective formula
@@ -50,6 +52,7 @@ Dim tbl As ListObject 'Consolidate Table
 Dim rng As Range 'Range specifically for the table
 Dim SheetCount As Integer 'Holds the number of sheets found in the document.
 Dim WorksheetName As String 'Holds the worksheet name in the check cycle.
+Dim FormulaOne As String 'Holds the checking formula for the background sheet
 
 If MsgBox("Warning, Previous Data may be overwritten. Continue?", vbYesNo, "Warning.") = vbNo Then
     Exit Sub
@@ -90,8 +93,7 @@ End If
                 WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
                 Load UserForm1
                 UserForm1.lbl_ResponsabilityArea = WorksheetName
-                G_Responsibility = i + 1
-                UserForm1.Tag = G_Responsibility
+                UserForm1.Tag = i + 1
                 UserForm1.Show
                 i = i + 1
             End If
@@ -114,8 +116,7 @@ End If
                         WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
                         Load UserForm1
                         UserForm1.lbl_ResponsabilityArea = WorksheetName
-                        G_Responsibility = i + 1
-                        UserForm1.Tag = G_Responsibility
+                        UserForm1.Tag = i + 1
                         UserForm1.Show
                         i = i + 1
                     Loop
@@ -152,6 +153,7 @@ End If
         
         End With
 'GoTo DebugSkip
+'// COMMENTS HERE PLEASE
     
     Loop
 
@@ -191,11 +193,9 @@ DebugSkip:
     LastRow = Worksheets("Background").Range("D2").Value
     
     Do Until i = TotalSheets + 1 'this is overflowing at some point.
-     
-     If i = 4 Then
-     p = 1
-     End If
-     
+
+'// THIS ALL NEEDS COMMENTING AS AN EXPLANATION
+
         Do Until j = LastRow
         
         
@@ -217,10 +217,6 @@ DebugSkip:
         Else
             String2Boolean = False
         End If
-        
-        'String1 = StrConv(String1, vbProperCase)
-        'String2 = StrConv(String2, vbProperCase)
-        
         
         If String1Boolean = True And String2Boolean = True Then
             Worksheets(i).Rows(j).EntireRow.Copy
@@ -273,10 +269,6 @@ DebugSkip:
         'Code utalised from the source at: https://www.thespreadsheetguru.com/blog/2014/6/20/the-vba-guide-to-listobject-excel-tables
         .Range("B6").Activate
     End With
-    
-    
-    
-    
     
     GoTo Leave
 
