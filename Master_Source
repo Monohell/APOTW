@@ -2,213 +2,6 @@ Option Explicit 'Requires all variables to be declared fully
 Option Compare Text 'Removes case sensativity
 Public G_Responsibility As String 'used to determine what kind of function is returned in the Strat/Funct/Area Check
 
-Private Sub cmd_Information_Click()
-
-Dim LastRow As Integer
-Dim DatePublished As String
-Dim VersionNumber As String
-
-    With Worksheets("Background")
-        LastRow = .Cells(.Rows.Count, 45).End(xlUp).Row
-        DatePublished = .Range("AS" & LastRow)
-        DevVersion = .Range("AA" & LastRow)
-        
-    End With
-    
-    MsgBox "To contact the developer, please use the below contact infomation, correct at the time of publication." & vbCr & vbCr & _
-            "Application Name" & vbTab & vbTab & "APOTW Critical Events" & vbCr & _
-            "Application Version" & vbTab & vbTab & DevVersion & vbCr & _
-            "App Push Date" & vbTab & vbTab & DatePublished & vbCr & _
-            "Developer Name" & vbTab & vbTab & "Joshua McDonald" & vbCr & _
-            "Developer Email" & vbTab & vbTab & "joshua.mcdonald@amecfw.com" & vbCr & _
-            "Developer Phone (Work)" & vbTab & "01946 598573", vbInformation, "Application Information"
-
-
-End Sub
-
-Private Sub cmd_Updater_Click()
-
-
-On Error GoTo ErrorHandler
-Application.ScreenUpdating = False
-
-
-Dim i As Integer 'Used to count manyyyyy things
-Dim j As Integer 'Used again, to count a lot
-Dim LastRow As Integer 'Overwritten a lot contrary to other programs.
-Dim TotalSheets As Integer 'Shows the last sheet number.
-Dim FormulasOne As String 'holds the sting with the respective formula
-Dim P1 As Range
-Dim P2 As Range
-Dim String1 As String 'Holds the string for the first part of the check if statment
-Dim String2 As String 'Holds the string for the Second part of the check if statment
-Dim String1Boolean As Boolean 'Used to check statments in the if checks
-Dim String2Boolean As Boolean 'Used to check statments in the if checks
-Dim MinutesElapsed As String 'timer method
-Dim StartTime As Double 'timer method
-Dim PredictedRecords As Integer 'The number of records predicted in the Background tab
-Dim tbl As ListObject 'Consolidate Table
-Dim rng As Range 'Range specifically for the table
-Dim SheetCount As Integer 'Holds the number of sheets found in the document.
-Dim WorksheetName As String 'Holds the worksheet name in the check cycle.
-
-If MsgBox("Warning, Previous Data may be overwritten. Continue?", vbYesNo, "Warning.") = vbNo Then
-    Exit Sub
-End If
-
-'Remember time when macro starts
-  StartTime = Timer
-
-    SheetCount = ThisWorkbook.Sheets.Count
-    'I want to add some kind of check here to stop the following loop occurring if the system hasnt been changed since the last use.
-    
-    i = 1
-    Do Until i = SheetCount + 1
-        Worksheets(i).Activate
-        WorksheetName = ActiveSheet.Name
-        Debug.Print "WrkSht Name: " & WorksheetName
-        If WorksheetName = "Background" Then
-            i = i + 1
-        Else
-            Worksheets("Background").Range("A" & i + 1).Value = i
-            Worksheets("Background").Range("B" & i + 1).Value = WorksheetName
-            Worksheets("Background").Range("C" & i + 1).Value = "IF(AND(OR('" & WorksheetName & "'!G6=""Yes"", '" & WorksheetName & "'!G6=""For Noting""),'" & WorksheetName & "'!P6=""Open""), 1, 0)" 'Need to check this works.
-            i = i + 1
-        End If
-    Loop
-    
-    i = 1
-    j = 1
-    
-    Do Until i = SheetCount + 1
-        If IsEmpty(Worksheets("Background").Range("B" & i + 1).Value) = True Then 'Finds out if Cells in Col B are empty for skipping (e.g. Background tab)
-            i = i + 1
-        Else
-            If IsEmpty(Worksheets("Background").Range("F" & i + 1).Value) = False Then 'Finds if the cells in Col F are already filled
-                i = i + 1
-                j = j + 1 'used in the checking of filled cells
-            Else 'Fills the responsibility in (Col F)
-                WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
-                Load UserForm1
-                UserForm1.lbl_ResponsabilityArea = WorksheetName
-                G_Responsibility = i + 1
-                UserForm1.Tag = G_Responsibility
-                UserForm1.Show
-                i = i + 1
-            End If
-        End If
-    Loop
-    
-    If j + 1 = i Then 'Updating responsibility loop, disregardable if desired
-        
-        If MsgBox("Do you want to update the Responsabilities for each tab?", vbYesNo, "Update Responsabilities?") = vbYes Then
-            i = 1
-            
-            Do Until i = SheetCount + 1
-                If IsEmpty(Worksheets("Background").Range("B" & i + 1).Value) = True Then 'Finds out if Cells in Col B are empty for skipping (e.g. Background tab)
-                    
-                    i = i + 1
-                
-                Else
-                    
-                    Do Until i = SheetCount + 1 'Copied from the loop above.
-                        WorksheetName = Worksheets("Background").Range("B" & i + 1).Value
-                        Load UserForm1
-                        UserForm1.lbl_ResponsabilityArea = WorksheetName
-                        G_Responsibility = i + 1
-                        UserForm1.Tag = G_Responsibility
-                        UserForm1.Show
-                        i = i + 1
-                    Loop
-                
-                End If
-            
-            Loop
-            
-        End If
-    
-    End If
-    
-    With ActiveSheet
-        LastRow = .Cells(.Rows.Count, 7).End(xlUp).Row
-        .Range("B6:Q" & LastRow * 2).Clear
-    End With
-    
-    i = 2 'Sets the sheet to #3, skipping background and POTW
-    j = 2 'sets the paste location as row 2 on Background.
-    TotalSheets = ThisWorkbook.Sheets.Count
-    
-    
-    Do Until i = TotalSheets + 1
-        
-        With Worksheets(i)
-            
-            LastRow = Worksheets(i).Cells(.Rows.Count, 7).End(xlUp).Row
-            Worksheets("Background").Range("D" & j).Value = LastRow
-            LastRow = 0
-            i = i + 1
-            j = j + 1
-            LastRow = 0
-            'This stopped two rows short 'Should now be fixed
-        
-        End With
-'GoTo DebugSkip
-    
-    Loop
-
-     i = 2
-    j = 8
-
-    Do Until i = TotalSheets - 2
-
-        FormulaOne = "=" & Worksheets("Background").Range("C" & i).Value
-        LastRow = Worksheets("Background").Range("D" & i).Value
-
-        Set P1 = Cells(i, j)
-        Set P2 = Cells(i, LastRow)
-
-        Sheets("Background").Activate
-        With ActiveSheet
-            Worksheets("Background").Range(.Cells(2, j), .Cells(LastRow, j)).Formula = FormulaOne
-            'This just didnt work
-        End With
-        
-        j = j + 1
-        i = i + 1
-        FormulaOne = ""
-        LastRow = 0
-
-    Loop
-    
-    PredictedRecords = Worksheets("Background").Range("AC2").Value
-    MsgBox "There are an estimated " & PredictedRecords & " records available.", vbInformation, "Record Estimate."
-    
-DebugSkip:
-    
-    i = 3 'Starting Worksheet (Worksheet Position Indicator)
-    j = 6 'Starting Cell Position (Cell Position in Second Loop)
-    k = 6 'Paste Position of Rows on Strat POTW Sheet
-    
-    LastRow = Worksheets("Background").Range("D2").Value
-    
-    Do Until i = TotalSheets + 1 'this is overflowing at some point.
-     
-     If i = 4 Then
-     p = 1
-     End If
-     
-        Do Until j = LastRow
-        
-        
-        String1 = Worksheets(i).Range("P" & j).Value
-        String2 = Worksheets(i).Range("G" & j).Value
-        
-        If String1 = "Open" Then
-            String1Boolean = True
-        Else
-            String1Boolean = False
-        End If
-        
 
 Private Sub cmd_Updater_Click()
 
@@ -238,6 +31,9 @@ Dim SheetCount As Integer 'Holds the number of sheets found in the document.
 Dim WorksheetName As String 'Holds the worksheet name in the check cycle.
 Dim FormulaOne As String 'Holds the checking formula for the background sheet
 Dim SheetResponsibility As String 'Used to find if the sheet is Strat, Funct or Area.
+Dim ResponsibilityNumber As Integer 'finds the sheet number the response should go to
+Dim NextRow As Integer 'Finds the next row on the apropriate sheet
+Dim NextStrategicRow As Integer 'holds a constant number for the next strategic row
 
 Dim a As Integer 'sum of all lastrows - 5 from each area sheet
 Dim b As Integer 'Sheet position in Area section
@@ -455,11 +251,11 @@ End If
     
 DebugSkip:
     
-    i = 3 'Starting Worksheet (Worksheet Position Indicator)
+    i = 11 'Starting Worksheet (Worksheet Position Indicator) 'Starts at areas
     j = 6 'Starting Cell Position (Cell Position in Second Loop)
     k = 6 'Paste Position of Rows on Strat POTW Sheet
     
-    LastRow = Worksheets("Background").Range("D2").Value
+    LastRow = Worksheets("Background").Range("H4").Value
     
     Do Until i = TotalSheets + 1 'this is overflowing at some point.
     
@@ -470,7 +266,7 @@ DebugSkip:
         
         String1 = Worksheets(i).Range("P" & j).Value
         String2 = Worksheets(i).Range("G" & j).Value
-        'SheetResponsibility = Worksheets("Background")
+        SheetResponsibility = Worksheets(i).Range("H" & j).Value
         
         If String1 = "Open" Then
             String1Boolean = True
@@ -488,11 +284,16 @@ DebugSkip:
             String2Boolean = False
         End If
         
+        On Error Resume Next
+        ResponsibilityNumber = Application.WorksheetFunction.VLookup(SheetResponsibility, Worksheets("Background").Range("AM3:AN22"), 2, False)   'Response Sheet Number
+        NextRow = Application.WorksheetFunction.VLookup(ResponsibilityNumber, Worksheets("Background").Range("AP3:AQ22"), 2, False) 'Next row for the desired response
+        NextStrategicRow = Worksheets("Background").Range("AQ4").Value 'Strategic row Value
+        
         If String1Boolean = True And String2Boolean = True Then
                 Worksheets(i).Rows(j).EntireRow.Copy
-                Worksheets("Strategic POTW").Range("A" & k).PasteSpecial xlPasteAll 'Error Pasting, Run to completion for error 'Fixed by setting the value to A instead of B... Case sensative?
+                Worksheets("Strategic POTW").Range("A" & NextStrategicRow).PasteSpecial xlPasteAll 'Error Pasting, Run to completion for error 'Fixed by setting the value to A instead of B... Case sensative?
+                Worksheets(ResponsibilityNumber).Range("A" & NextRow).PasteSpecial xlPasteAll
                 k = k + 1
-                
                 Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow & " - Rpb: " & SheetResponsibility
                 
         End If
@@ -505,12 +306,12 @@ DebugSkip:
         i = i + 1
         j = 6
         
-        LastRow = Worksheets("Background").Range("D" & i - 1)
+        'LastRow = Worksheets("Background").Range("D" & i - 1)
         Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow
         
     Loop
     
-    
+    On Error GoTo ErrorHandler
     Worksheets("Strategic POTW").Activate
         
     
@@ -562,4 +363,3 @@ Leave:
 Application.ScreenUpdating = True
     
 End Sub
-
