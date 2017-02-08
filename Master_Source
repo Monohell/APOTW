@@ -295,7 +295,11 @@ DebugSkip:
                 Worksheets(ResponsibilityNumber).Range("A" & NextRow).PasteSpecial xlPasteAll
                 k = k + 1
                 Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow & " - Rpb: " & SheetResponsibility
-                
+        Else
+                Worksheets(i).Rows(j).EntireRow.Copy
+                Worksheets(ResponsibilityNumber).Range("A" & NextRow).PasteSpecial xlPasteAll
+                k = k + 1
+                Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow & " - Rpb: " & SheetResponsibility
         End If
         
         j = j + 1
