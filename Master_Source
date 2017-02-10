@@ -34,6 +34,8 @@ Dim SheetResponsibility As String 'Used to find if the sheet is Strat, Funct or 
 Dim ResponsibilityNumber As Integer 'finds the sheet number the response should go to
 Dim NextRow As Integer 'Finds the next row on the apropriate sheet
 Dim NextStrategicRow As Integer 'holds a constant number for the next strategic row
+Dim TableName2 As String 'used for vlookup of table name
+
 
 Dim a As Integer 'sum of all lastrows - 5 from each area sheet
 Dim b As Integer 'Sheet position in Area section
@@ -47,6 +49,7 @@ Dim MatrixLastRow As Integer
 Dim e As Integer 'how many times the process has been ran
 Dim f As Integer 'Position of the paste on the main sheet, is not reset between runs#
 Dim formulaVDestination As String
+Dim EnvString As String 'Enviromnment Holder
 
 'Wait Variables
 Dim newHour As Double
@@ -54,9 +57,18 @@ Dim newMinute As Double
 Dim newSecond As Double
 Dim WaitTime As Boolean
 
+Dim DebugFile As Integer
+
+
+
 If MsgBox("Warning, Previous Data may be overwritten. Continue?", vbYesNo, "Warning.") = vbNo Then
     Exit Sub
 End If
+
+DebugFile = FreeFile()
+'EnvString = Environ("Userprofile")    ' Get environment
+Open (Environ("UserProfile") & "\Desktop\Debug.txt") For Output As #DebugFile
+'Open ""%userprofile%\Desktop\Debug.txt"" For Output As #DebugFile
 
 'Remember time when macro starts
   StartTime = Timer
@@ -64,11 +76,14 @@ End If
     SheetCount = ThisWorkbook.Sheets.Count
     'I want to add some kind of check here to stop the following loop occurring if the system hasnt been changed since the last use.
     
+    
+    
     i = 1
     Do Until i = SheetCount + 1
         Worksheets(i).Activate
         WorksheetName = ActiveSheet.Name
         Debug.Print "WrkSht Name: " & WorksheetName
+        Print #DebugFile, "WrkSht Name: " & WorksheetName
         If WorksheetName = "Background" Then
             i = i + 1
         Else
@@ -79,8 +94,22 @@ End If
         End If
     Loop
     
-    i = 1
+    Print #DebugFile, "-----------------------------------------------------------------"
+    
+    i = 2
     j = 1
+    
+    On Error Resume Next
+    Do Until i = 11
+        RemoveOldData i
+        Debug.Print "WrkSht " & Application.WorksheetFunction.VLookup(i, Worksheets("Background").Range("A2:B21"), 2, False) & " has been cleared."
+        Print #DebugFile, "WrkSht " & Application.WorksheetFunction.VLookup(i, Worksheets("Background").Range("A2:B21"), 2, False) & " has been cleared."
+        i = i + 1
+    Loop
+    
+    On Error GoTo ErrorHandler
+    Print #DebugFile, "-----------------------------------------------------------------"
+    i = 1
     
     Do Until i = SheetCount + 1
         If IsEmpty(Worksheets("Background").Range("B" & i + 1).Value) = True Then 'Finds out if Cells in Col B are empty for skipping (e.g. Background tab)
@@ -197,9 +226,13 @@ End If
             Source = ActiveSheet.Name 'Gets sheets name from the active sheet
             
             Debug.Print "UID: " & UID & " - Destination: " & Destination & " - Source: " & Source 'debug line
+            Print #DebugFile, "UID: " & UID & " - Destination: " & Destination & " - Source: " & Source
+            
             formulaVSource = "=VLOOKUP(AH" & f & ", $AM$3:$AN$22, 2, ""FALSE"")" 'Standard VLOOKUP
             formulaVDestination = "=VLOOKUP(AJ" & f & ", $AM$3:$AN$22, 2, ""FALSE"")" 'Standard VLOOKUP
+            
             Debug.Print "Sheet Lookup: " & formulaVSource & " - Destination Lookup: " & formulaVDestination
+            'Print #DebugFile, "Sheet Lookup: " & formulaVSource & " - Destination Lookup: " & formulaVDestination
             
             Worksheets("Background").Range("AG" & f).Value = UID 'changes the column UID etc. to the alues of their namesake. Can be used to lookup a destination later.
             Worksheets("Background").Range("AH" & f).Value = Source
@@ -218,13 +251,16 @@ End If
     
     Loop
         
-        
+    Print #DebugFile, "-----------------------------------------------------------------"
+
 'GoTo DebugSkip
 '// COMMENTS HERE PLEASE
     
     i = 3
     j = 9
-    
+        
+    Worksheets("Background").Range("I2:Z10000").Clear
+        
     Do Until i = TotalSheets + 1
     
         FormulaOne = "=" & Worksheets("Background").Range("C" & i).Value
@@ -248,24 +284,31 @@ End If
     
     PredictedRecords = Worksheets("Background").Range("AD2").Value
     MsgBox "There are an estimated " & PredictedRecords & " records available.", vbInformation, "Record Estimate."
+    Print #DebugFile, "Prediction Routine Complete"
+    Print #DebugFile, "There are an estimated " & PredictedRecords & " records available.", vbInformation, "Record Estimate."
+    Print #DebugFile, "-----------------------------------------------------------------"
     
-DebugSkip:
+'DebugSkip:
     
     i = 11 'Starting Worksheet (Worksheet Position Indicator) 'Starts at areas
     j = 6 'Starting Cell Position (Cell Position in Second Loop)
     k = 6 'Paste Position of Rows on Strat POTW Sheet
     
     LastRow = Worksheets("Background").Range("H4").Value
+     
+'GoTo DebugSkip
     
     Do Until i = TotalSheets + 1 'this is overflowing at some point.
     
 '// THIS ALL NEEDS COMMENTING AS AN EXPLANATION
-    
+    If i = i Then
+    End If
         Do Until j = LastRow
         
         
         String1 = Worksheets(i).Range("P" & j).Value
         String2 = Worksheets(i).Range("G" & j).Value
+        
         SheetResponsibility = Worksheets(i).Range("H" & j).Value
         
         If String1 = "Open" Then
@@ -284,6 +327,14 @@ DebugSkip:
             String2Boolean = False
         End If
         
+        If String1 = "" Then
+            If String2 = "" Then
+                GoTo Skip
+            End If
+        End If
+        
+        
+        
         On Error Resume Next
         ResponsibilityNumber = Application.WorksheetFunction.VLookup(SheetResponsibility, Worksheets("Background").Range("AM3:AN22"), 2, False)   'Response Sheet Number
         NextRow = Application.WorksheetFunction.VLookup(ResponsibilityNumber, Worksheets("Background").Range("AP3:AQ22"), 2, False) 'Next row for the desired response
@@ -294,56 +345,101 @@ DebugSkip:
                 Worksheets("Strategic POTW").Range("A" & NextStrategicRow).PasteSpecial xlPasteAll 'Error Pasting, Run to completion for error 'Fixed by setting the value to A instead of B... Case sensative?
                 Worksheets(ResponsibilityNumber).Range("A" & NextRow).PasteSpecial xlPasteAll
                 k = k + 1
-                Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow & " - Rpb: " & SheetResponsibility
+                Debug.Print "Sheet Number: " & i & " - Row Number: " & j & " Pasting To SAPOTW and " & SheetResponsibility
+                Print #DebugFile, "Sheet Number: " & i & " - Row Number: " & j & " Pasting To SAPOTW and " & SheetResponsibility
+                
+                'Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow & " - Rpb: " & SheetResponsibility
         Else
                 Worksheets(i).Rows(j).EntireRow.Copy
                 Worksheets(ResponsibilityNumber).Range("A" & NextRow).PasteSpecial xlPasteAll
                 k = k + 1
-                Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow & " - Rpb: " & SheetResponsibility
+                Debug.Print "Sheet Number: " & i & " - Row Number: " & j & " Pasting To " & SheetResponsibility; " ONLY"
+                Print #DebugFile, "Sheet Number: " & i & " - Row Number: " & j & " Pasting To " & SheetResponsibility; " ONLY"
+                
+                'Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow & " - Rpb: " & SheetResponsibility
         End If
         
         j = j + 1
-        Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow
+        
+        Debug.Print "Sheet Number: " & i & " - Increasing Row Number by One to: " & j
+        Print #DebugFile, "Sheet Number: " & i & " - Increasing Row Number by One to: " & j
+
+        'Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow
         
         Loop
         
+Skip:
         i = i + 1
         j = 6
         
         'LastRow = Worksheets("Background").Range("D" & i - 1)
-        Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow
+        Debug.Print "Increasing Sheet Number by One to: " & i & " - Resetting Row Number: " & j & " - Current SAPOTW Paste Row " & k
+        Print #DebugFile, "Increasing Sheet Number by One to: " & i & " - Resetting Row Number: " & j & " - Current SAPOTW Paste Row " & k
+        'Debug.Print "I: " & i & " - J: " & j & " - K: " & k & " - LR: " & LastRow
         
     Loop
     
+DebugSkip:
+
+    Debug.Print "Exiting Pass Forwards Loop"
+    Print #DebugFile, "Exiting Pass Forwards Loop"
+
+    Print #DebugFile, "-----------------------------------------------------------------"
+  
     On Error GoTo ErrorHandler
+    
+    i = 2
+    Do Until i = TotalSheets + 1
+        
+        Worksheets(i).Activate
+        
+        With ActiveSheet
+            LastRow = .Cells(.Rows.Count, 2).End(xlUp).Row
+        End With
+        
+        Worksheets(i).Range("B6:Q" & LastRow + 100).ClearFormats
+        Print #DebugFile, "Entering Table_Formatter Function, Focus: Sheet " & i & " - " & Application.WorksheetFunction.VLookup(i, Worksheets("Background").Range("A2:B21"), 2, False) & ". Debugging OFF"
+        
+        
+        TableName2 = Application.WorksheetFunction.VLookup(i, Worksheets("Background").Range("AS3:AT21"), 2, False)
+        TableFormatter TableName2, i
+        
+        Print #DebugFile, "Table_Formatter, Sheet " & i & " - " & Application.WorksheetFunction.VLookup(i, Worksheets("Background").Range("A2:B21"), 2, False) & " : Exiting Function - Sucsessfully. Debugging ON"
+        Print #DebugFile, "-----------------------------------------------------------------"
+        
+        i = i + 1
+        
+    Loop
+    
     Worksheets("Strategic POTW").Activate
         
     
-    With ActiveSheet
-        LastRow = .Cells(.Rows.Count, 2).End(xlUp).Row
-        Set tbl = .ListObjects("Consolidate")
-        i = tbl.Range.Rows.Count
-        
-        If i > k Then
-            j = i - k - 5
-            Set rng = Range("Consolidate[#All]").Resize(tbl.Range.Rows.Count - j, tbl.Range.Columns.Count)
-        ElseIf i < k Then
-            j = k - i - 5
-              Set rng = Range("Consolidate[#All]").Resize(tbl.Range.Rows.Count + j, tbl.Range.Columns.Count)
-        ElseIf i = k Then
-            GoTo Leave
-        Else
-            MsgBox "MS Excel has generated the following error" & vbCrLf & vbCrLf & "Error Number: 24739" & vbCrLf & "Error Source: Table Resize Event" & vbCrLf & "Error Description: Unspecified Error occured when updating the table size.", vbCritical, "An Error has Occured!"
-            GoTo Leave
-        End If
-        
-        tbl.Resize rng
-        .Range("B6:Q" & LastRow + 100).ClearFormats
-        
-        
-        'Code utalised from the source at: https://www.thespreadsheetguru.com/blog/2014/6/20/the-vba-guide-to-listobject-excel-tables
-        .Range("B6").Activate
-    End With
+'    With ActiveSheet
+'
+'        LastRow = .Cells(.Rows.Count, 2).End(xlUp).Row
+'        Set tbl = .ListObjects("Consolidate")
+'        i = tbl.Range.Rows.Count
+'
+'        If i > k Then
+'            j = i - k - 5
+'            Set rng = Range("Consolidate[#All]").Resize(tbl.Range.Rows.Count - j, tbl.Range.Columns.Count)
+'        ElseIf i < k Then
+'            j = k - i - 5
+'              Set rng = Range("Consolidate[#All]").Resize(tbl.Range.Rows.Count + j, tbl.Range.Columns.Count)
+'        ElseIf i = k Then
+'            GoTo Leave
+'        Else
+'            MsgBox "MS Excel has generated the following error" & vbCrLf & vbCrLf & "Error Number: 24739" & vbCrLf & "Error Source: Table Resize Event" & vbCrLf & "Error Description: Unspecified Error occured when updating the table size.", vbCritical, "An Error has Occured!"
+'            GoTo Leave
+'        End If
+'
+'        tbl.Resize rng
+'        .Range("B6:Q" & LastRow + 100).ClearFormats
+'
+'
+'        'Code utalised from the source at: https://www.thespreadsheetguru.com/blog/2014/6/20/the-vba-guide-to-listobject-excel-tables
+'        .Range("B6").Activate
+'    End With
     
     GoTo Leave
     
@@ -352,9 +448,16 @@ ErrorHandler:
     MsgBox "MS Excel has generated the following error" & vbCrLf & vbCrLf & "Error Number: " & _
         Err.Number & vbCrLf & "Error Source: Critical Events Combination" & vbCrLf & "Error Description: " & _
         Err.Description, vbCritical, "An Error has Occured!"
+        MinutesElapsed = Format((Timer - StartTime) / 86400, "hh:mm:ss")
+        Print #DebugFile, "MS Excel has generated the following error" & vbCrLf & vbCrLf & "Error Number: " & _
+        Err.Number & vbCrLf & "Error Source: Critical Events Combination" & vbCrLf & "Error Description: " & _
+        Err.Description & " - This process ran unsuccessfully for " & MinutesElapsed & " minutes" & vbNewLine & vbNewLine & k - 6 & " record have been processed out of a predicted " & PredictedRecords
+        Close #DebugFile
     Exit Sub
     
 Leave:
+    
+        
     
         Worksheets("Strategic POTW").Activate
         
@@ -363,6 +466,8 @@ Leave:
         
         'Notify user in seconds (modify as and when required)
         MsgBox "This process ran successfully in " & MinutesElapsed & " minutes" & vbNewLine & vbNewLine & k - 6 & " record have been processed out of a predicted " & PredictedRecords & vbNewLine & "This number may vary due to formula case sensetivity.", vbInformation
+        Print #DebugFile, "This process ran successfully in " & MinutesElapsed & " minutes" & vbNewLine & vbNewLine & k - 6 & " record have been processed out of a predicted " & PredictedRecords
+        Close #DebugFile
         
 Application.ScreenUpdating = True
     
