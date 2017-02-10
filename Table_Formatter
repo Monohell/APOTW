@@ -1,0 +1,112 @@
+Option Compare Text
+Option Explicit
+
+Public Function TableFormatter(TableName As String, SheetNumber As Integer)
+
+On Error GoTo ErrorHandler
+    
+Dim i As Integer 'number of total rows in the table resize loop
+Dim j As Integer 'tracks the row number in the table resixing loop
+Dim LastRow As Integer 'Wicks...
+Dim tbl As ListObject 'Table selection
+Dim rng As Range 'Range specifically for the table
+Dim k As Integer 'number of columns
+Dim l As Integer 'counts table columns in loop, set to 2
+Dim g As Integer 'tracks the row number in the removal of spaces loop
+Dim f As Integer 'tracks the total number of deletions per sub-loop
+
+
+    f = 6
+    g = 6
+
+    Worksheets(SheetNumber).Activate 'Resizes the table
+    With ActiveSheet
+        LastRow = .Cells(.Rows.Count, 2).End(xlUp).Row 'Delets blank rows
+            Do Until f = LastRow + 1
+                
+                If .Range("B" & g) = "" Then
+                    .Rows(g).EntireRow.Delete
+                    f = f + 1
+                Else
+                    g = g + 1
+                    f = f + 1
+                End If
+            
+            Loop
+    End With
+    
+    'Print #DebugFile, "Table_Formatter, Sheet " & SheetNumber & " : Extra Rows Removed"
+    
+    Worksheets(SheetNumber).Activate    'Resizes the table
+    With ActiveSheet
+        LastRow = .Cells(.Rows.Count, 2).End(xlUp).Row
+        Set tbl = .ListObjects(TableName)
+        i = tbl.Range.Rows.Count
+        k = tbl.Range.Columns.Count
+        
+        If i > LastRow Then
+            j = i - LastRow - 5
+            Set rng = Range(TableName & "[#All]").Resize(tbl.Range.Rows.Count - (j - 1), tbl.Range.Columns.Count)
+        
+        ElseIf i < LastRow Then
+            j = LastRow - i - 5
+              Set rng = Range(TableName & "[#All]").Resize(tbl.Range.Rows.Count + (j + 1), tbl.Range.Columns.Count)
+        
+        ElseIf i = LastRow Then
+            GoTo Leave
+        
+        Else
+            MsgBox "MS Excel has generated the following error" & vbCrLf & vbCrLf & "Error Number: 24739" & vbCrLf & "Error Source: Table Resize Event" & vbCrLf & "Error Description: Unspecified Error occured when updating the table size.", vbCritical, "An Error has Occured!"
+            GoTo Leave
+        End If
+        
+        tbl.Resize rng
+        .Range("B6:Q" & LastRow + 100).ClearFormats
+        
+        'Print #DebugFile, "Table_Formatter, Sheet " & SheetNumber & " : Tables Resized"
+        
+        l = 1
+        
+        Do Until l = k + 1 'Format each row of the table
+        
+        .ListObjects(TableName).ListColumns(l).Range.HorizontalAlignment = xlCenter
+        .ListObjects(TableName).ListColumns(l).Range.VerticalAlignment = xlCenter
+        '.ListObjects(TableName).ListColumns(l).AutoFit
+        
+        If l = 4 Then
+                .Range("D6:D" & LastRow + 2).NumberFormat = "dd/mm/yyyy;@"
+        End If
+        If l = 15 Then
+            .Range("O6:O" & LastRow + 2).NumberFormat = "dd/mm/yyyy;@"
+        End If
+        If l = 17 Then
+            .Range("Q6:Q" & LastRow + 2).NumberFormat = "dd/mm/yyyy;@"
+        End If
+        
+        l = l + 1
+        
+        Loop
+        
+        'Print #DebugFile, "Table_Formatter, Sheet " & SheetNumber & " : Dates Formatted"
+        
+        'Code utalised from the source at: https://www.thespreadsheetguru.com/blog/2014/6/20/the-vba-guide-to-listobject-excel-tables
+    End With
+    
+    GoTo Leave
+
+    
+
+
+ErrorHandler:
+    
+        MsgBox "MS Excel has generated the following error" & vbCrLf & vbCrLf & "Error Number: " & _
+        Err.Number & vbCrLf & "Error Source: Formatting" & vbCrLf & "Error Description: " & _
+        Err.Description, vbCritical, "An Error has Occured!"
+        'Print #DebugFile, "MS Excel has generated the following error" & vbCrLf & vbCrLf & "Error Number: " & _
+        Err.Number & vbCrLf & "Error Source: Critical Events Combination" & vbCrLf & "Error Description: " & _
+        Err.Description & " - This process ran unsuccessfully for " & MinutesElapsed & " minutes" & vbNewLine & vbNewLine & k - 6 & " record have been processed out of a predicted " & PredictedRecords
+    
+
+Leave:
+
+End Function
