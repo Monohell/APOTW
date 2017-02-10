@@ -1,0 +1,15 @@
+Option Compare Text
+Option Explicit
+
+Public Function RemoveOldData(SheetNumber As Integer)
+
+Dim LastRow As Integer 'Lsat row in sheet
+Dim i As Integer 'row position in sheet, starts at 6
+
+    Worksheets(SheetNumber).Activate
+    With ActiveSheet
+        LastRow = .Cells(.Rows.Count, 2).End(xlUp).Row
+        .Range("B6:Q" & LastRow).Delete
+    End With
+    
+End Function
